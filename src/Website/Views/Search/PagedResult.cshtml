@@ -1,0 +1,23 @@
+﻿@model Website.Models.SearchResultModel<Sitecore.ContentSearch.SearchTypes.SearchResultItem>
+<h2>PagedResult</h2>
+<table class="table table-striped">
+    <thead>
+        <tr>
+            <th>Item name</th>
+        </tr>
+    </thead>
+    <tbody>
+        @foreach (var result in Model.Hits)
+        {
+            <tr>
+                <td>@result.Document.Name</td>
+            </tr>
+        }
+    </tbody>
+</table>
+<ul class="pagination">
+    @for (var i=0; i < Math.Ceiling(Model.TotalSearchResults/10f); i++)
+    {
+          <li>@Html.ActionLink((i+1).ToString(), "PagedResult", new { id = i })</li>
+    }
+</ul>

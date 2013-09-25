@@ -1,0 +1,19 @@
+﻿@model IEnumerable<Sitecore.ContentSearch.SearchTypes.SearchResultItem>
+<h2>Paths</h2>
+<table class="table table-striped">
+    <thead>
+        <tr>
+            <th>Item name</th>
+            <th>Path</th>
+        </tr>
+    </thead>
+    <tbody>
+        @foreach (var result in Model)
+        {
+            <tr>
+                <td>@result.Name</td>
+                <td>@result.Path</td>
+            </tr>
+        }
+    </tbody>
+</table>

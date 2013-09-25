@@ -1,0 +1,15 @@
+﻿@model Website.Models.SearchResultModel<Sitecore.ContentSearch.SearchTypes.SearchResultItem>
+<h2>Boost</h2>
+<table>
+    <tr>
+        <th>Item name</th>
+        <th>Result score</th>
+    </tr>
+@foreach (var result in Model.Hits)
+{
+    <tr>
+        <td>@result.Document.Name</td>
+        <td>@result.Score</td>
+    </tr>
+}
+</table>

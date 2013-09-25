@@ -1,0 +1,62 @@
+﻿@model Website.Models.SearchResultModel<Sitecore.ContentSearch.SearchTypes.SearchResultItem>
+<h2>Facets</h2>
+<div class="btn-group">
+    @foreach(var facetCategory in Model.Facets.Categories)
+    {
+    <div class="btn-group">
+        <button type="button" class="btn btn-default dropdown-toggle" data-toggle="dropdown">
+            @facetCategory.Name
+            <span class="caret"></span>
+        </button>
+        <ul class="dropdown-menu">
+            @{
+            foreach(var facetCategoryValue in facetCategory.Values)
+            {
+                var currentFacets = ViewBag.Facets as IEnumerable<KeyValuePair<string, string>>;
+                var facets = new List<KeyValuePair<string,string>>(currentFacets);
+                facets.Add(new KeyValuePair<string,string>(facetCategory.Name, facetCategoryValue.Name));
+                bool selected = currentFacets.Any(kvp => kvp.Key == facetCategory.Name && kvp.Value == facetCategoryValue.Name);
+                if (selected)
+                {
+                <li class="disabled" >
+                    <a href="#">
+                             @facetCategoryValue.Name (@facetCategoryValue.AggregateCount)
+                    </a>
+                </li>
+                }
+                else
+                {
+                <li>
+                    <a href="@(Website.Controllers.SearchController.BuildFacetUrl("/search/facets",  facets))">
+                             @facetCategoryValue.Name (@facetCategoryValue.AggregateCount)
+                    </a>
+                </li>
+                }
+            }
+            }
+        </ul>
+    </div>
+    }
+</div>
+<table class="table table-striped">
+    <thead>
+        <tr>
+            <th>Item name</th>
+            <th>Template Name</th>
+            <th>Language</th>
+            <th>Result score</th>
+        </tr>
+    </thead>
+    <tbody>
+        @foreach (var result in Model.Hits)
+        {
+            <tr>
+                <td>@result.Document.Name</td>
+                <td>@result.Document.TemplateName</td>
+                <td>@result.Document.Language</td>
+                <td>@result.Score</td>
+            </tr>
+        }
+    </tbody>
+</table>
+
