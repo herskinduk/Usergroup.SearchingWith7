@@ -103,7 +103,6 @@ namespace Website.Controllers
                 //    .Filter(i => i.Name.Contains("Folder"))
                 //    .GetResults();
 
-
                 // Query restriction to only show items - This will impact ranking!
                 //var result = queryable
                 //    .Where(i => (i.Name.Contains("Media") || i.Name.Contains("FDA")) && i.Name.Contains("Folder"))
@@ -173,54 +172,53 @@ namespace Website.Controllers
 
         public ActionResult Regex(string id)
         {
+            id = id ?? "";
             var searchResultModel = new Models.SearchResultModel<SearchResultItem>();
             ViewBag.Regex = id;
 
             var index = ContentSearchManager.GetIndex("sitecore_master_index");
 
-            if (id != null)
+
+            using (var context = index.CreateSearchContext())
             {
-                using (var context = index.CreateSearchContext())
-                {
-                    var queryable = context.GetQueryable<SearchResultItem>();
+                var queryable = context.GetQueryable<SearchResultItem>();
 
-                    var result = queryable
-                        .Where(i => i.Name.Matches(id))
-                        .GetResults();
+                var result = queryable
+                    .Where(i => i.Name.Matches(id))
+                    .GetResults();
 
-                    searchResultModel.Hits = result.Hits.ToList();
-                    searchResultModel.TotalSearchResults = result.TotalSearchResults;
-                    searchResultModel.Facets = result.Facets;
+                searchResultModel.Hits = result.Hits.ToList();
+                searchResultModel.TotalSearchResults = result.TotalSearchResults;
+                searchResultModel.Facets = result.Facets;
 
-                    return View(searchResultModel);
-                }
+                return View(searchResultModel);
             }
             return new EmptyResult();
         }
 
         public ActionResult Fuzzy(string id)
         {
+            id = id ?? "";
             var searchResultModel = new Models.SearchResultModel<SearchResultItem>();
 
             var index = ContentSearchManager.GetIndex("sitecore_master_index");
 
-            if (id != null)
+
+            using (var context = index.CreateSearchContext())
             {
-                using (var context = index.CreateSearchContext())
-                {
-                    var queryable = context.GetQueryable<SearchResultItem>();
+                var queryable = context.GetQueryable<SearchResultItem>();
 
-                    var result = queryable
-                        .Where(i => i.Name.Like(id, 0.5f))
-                        .GetResults();
+                var result = queryable
+                    .Where(i => i.Name.Like(id, 0.5f))
+                    .GetResults();
 
-                    searchResultModel.Hits = result.Hits.ToList();
-                    searchResultModel.TotalSearchResults = result.TotalSearchResults;
-                    searchResultModel.Facets = result.Facets;
+                searchResultModel.Hits = result.Hits.ToList();
+                searchResultModel.TotalSearchResults = result.TotalSearchResults;
+                searchResultModel.Facets = result.Facets;
 
-                    return View(searchResultModel);
-                }
+                return View(searchResultModel);
             }
+
             return new EmptyResult();
         }
 
@@ -231,16 +229,21 @@ namespace Website.Controllers
             using (var context = index.CreateSearchContext())
             {
                 var queryable = context.GetQueryable<SearchResultItem>();
-                Expression<Func<SearchResultItem, bool>> expression = (i => i.Name.Contains("standard"));
-                Func<SearchResultItem, bool> func = (i => i.Name.Contains("standard"));
 
+                // Note how the Lamda is exactly the same for these two types. The compiler whether
+                // it needs to create it as an expression tree or an anonymous function.
+                Expression<Func<SearchResultItem, bool>> expression = (i => i.Name.Contains("Standard"));
+                Func<SearchResultItem, bool> func =                   (i => i.Name.Contains("Standard"));
+
+                // Using intellisense on the Where you can see that it applies to a IQueryable
                 var timer1 = new Sitecore.Diagnostics.HighResTimer();
                 timer1.Start();
                 var result1 = queryable
-                    .Where(i => i.Name.Contains("standard"))
+                    .Where(expression)
                     .ToList();
                 timer1.Stop();
 
+                // Using intellisense on this Where you can see that it applies to IEnumerable
                 var timer2 = new Sitecore.Diagnostics.HighResTimer();
                 timer2.Start();
                 var result2 = queryable
@@ -248,14 +251,20 @@ namespace Website.Controllers
                     .ToList();
                 timer2.Stop();
 
-
-
                 ViewBag.Timer1 = timer1.ElapsedTimeSpan.Milliseconds;
                 ViewBag.Timer2 = timer2.ElapsedTimeSpan.Milliseconds;
 
+                // If you look in the Search log you can see something that looks like:
+                //
+                // 10408 20:30:26 INFO  ExecuteQueryAgainstLucene : _name:*standard* - Filter : 
+                // 10408 20:30:26 INFO  ExecuteQueryAgainstLucene : *:* - Filter : 
+                //
+                // What can we tell from that? When using the same Lamda expression against an 
+                // IQueryable and an IEnumerable - the IEnumerable will fetch EVERYTHING from the 
+                // database and then apply the Where filter as Linq to Object - rather than doing
+                // the query in the index.
                 ViewBag.Result1 = result1;
                 ViewBag.Result2 = result2;
-
 
                 return View(result2);
             }
